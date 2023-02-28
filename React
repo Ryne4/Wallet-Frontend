@@ -1,0 +1,69 @@
+import React, { useState, useEffect } from 'react';
+import { Token, Transaction } from './token';
+import { Wallet } from './wallet';
+
+function App() {
+  const [wallet, setWallet] = useState(new Wallet());
+  const [token, setToken] = useState(new Token());
+  const [recipientAddress, setRecipientAddress] = useState('');
+  const [amount, setAmount] = useState('');
+  const [balance, setBalance] = useState(0);
+  const [transactions, setTransactions] = useState([]);
+
+  useEffect(() => {
+    setBalance(token.get_balance(wallet.address));
+    setTransactions(token.get_transactions(wallet.address));
+  }, [wallet, token]);
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const tx = new Transaction(wallet.address, recipientAddress, amount);
+    tx.sign(wallet.private_key);
+    token.add_transaction(tx);
+    setToken(new Token(token.chain));
+    setRecipientAddress('');
+    setAmount('');
+  }
+
+  return (
+    <div>
+      <h1>Token Wallet</h1>
+      <p>Your address: {wallet.address}</p>
+      <p>Your balance: {balance}</p>
+      <form onSubmit={handleSubmit}>
+        <label>
+          Recipient Address:
+          <input type="text" value={recipientAddress} onChange={(event) => setRecipientAddress(event.target.value)} />
+        </label>
+        <br />
+        <label>
+          Amount:
+          <input type="text" value={amount} onChange={(event) => setAmount(event.target.value)} />
+        </label>
+        <br />
+        <input type="submit" value="Send Tokens" />
+      </form>
+      <h2>Transaction History</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Sender</th>
+            <th>Recipient</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {transactions.map((tx, index) => (
+            <tr key={index}>
+              <td>{tx.sender}</td>
+              <td>{tx.recipient}</td>
+              <td>{tx.amount}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export default App;
